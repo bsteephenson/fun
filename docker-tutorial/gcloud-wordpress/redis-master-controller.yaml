@@ -1,0 +1,35 @@
+
+# a replication controller for redis masters
+# plus the template for building redis masters
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+    name: redis-master
+    # these labels don't inherintly mean anything
+    # they just help us identify a group of pods
+    labels:
+        app: redis
+        role: master
+        tier: backend
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: redis
+                role: master
+                tier: backend
+        spec:
+            containers:
+              - name: master
+                image: gcr.io/google_containers/redis:e2e
+                resources:
+                    # what we ask of google cloud
+                    requests:
+                        cpu: 100m
+                        memory: 100Mi
+                ports:
+                    # i don't understand what this is for
+                    # but whatevs
+                  - containerPort: 6379
