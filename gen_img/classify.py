@@ -21,7 +21,7 @@ num_pixels = height * width
 im.show()
 
 # downsample
-rate = 4
+rate = 2
 im = im.resize((int(width / rate), int(height / rate)))
 
 (Xs, Ys, Xf, Yf) = im.getbbox()
@@ -49,11 +49,11 @@ data = np.array(data)
 
 print(data.shape)
 
-clusters = 16 * 2
+clusters = 8
 
 colors = data[:, 2:]
 
-color_labels = sklearn.cluster.KMeans(n_clusters = clusters).fit(colors).predict(colors)
+color_labels = sklearn.cluster.KMeans(n_clusters = clusters).fit(data).predict(data)
 
 # learner = sklearn.cluster.SpectralClustering(n_clusters = clusters, affinity="rbf", gamma = .001, assign_labels = "kmeans")
 # labels = learner.fit_predict(data)
@@ -82,7 +82,7 @@ print color_labels
 
 # create a subset to learn from
 
-TRAIN_PERCENT = .5
+TRAIN_PERCENT = 1.00
 
 indices = np.random.permutation(len(points))[:int(len(points) * TRAIN_PERCENT)]
 train_points = points[indices]
@@ -90,7 +90,8 @@ train_color_labels = color_labels[indices]
 
 print train_points.shape
 
-point_labels = sklearn.neural_network.MLPClassifier(hidden_layer_sizes = (200, 200), activation = "relu", verbose = True).fit(train_points, train_color_labels).predict_proba(points)
+point_labels = sklearn.neural_network.MLPClassifier(hidden_layer_sizes = (200, 200, 200), activation = "logistic", verbose = True).fit(train_points, train_color_labels).predict_proba(points)
+# point_labels = sklearn.neighbors.KNeighborsClassifier(n_neighbors = 3).fit(train_points, train_color_labels).predict_proba(points)
 
 
 
@@ -102,7 +103,10 @@ for i in range(num_pixels):
     x = int(i / height)
     y = int(i % height)
     # [r, g, b] = avg_colors[point_labels[i]]
-    [r, g, b] = np.dot(point_labels[i], avg_colors)
+    weights = point_labels[i]
+    weights = weights ** 10
+    weights = weights / np.sum(weights)
+    [r, g, b] = np.dot(weights, avg_colors)
     print((int(r), int(g), int(b)))
 #     im[(x, y)] = (int(r), int(g), int(b))
     im.putpixel((x, y), (int(r), int(g), int(b)))
